@@ -1,21 +1,38 @@
 (ns water_wheel.spoof-gpio
-  (:require [me.raynes.fs :as fs]))
+  (:require
+    [me.raynes.fs :as fs]
+    [clj-time.core :as t]))
 
 (def logfile "./gpio-log")
 
 (defn output-to-log [root dirs files]
-     (doseq [file files]
-        (spit logfile
-              (str file ":" (slurp file) "\n")
-              :append true)
-       (spit file "");clear file
-      ))
+  (map
+    (fn [file]
+      {
+       :file (str root "/" file)
+       :data (slurp (str root "/" file))
+      })
+    files))
 
 (defn listen-to-spoof-gpio-filesystem [file-system-location]
-  (fs/walk output-to-log file-system-location)
+   (flatten
+    (fs/walk output-to-log file-system-location)))
+
+(defn spoofed-data-empty? [data]
+
   )
 
+(defn log-spoofed-gpio []
+  (let [spoofed-data
+        (str
+          (
+          (pr-str (listen-to-spoof-gpio-filesystem "./spoof-sys/"))
+          "\n")]
+  (spit logfile spoofed-data :append true)
+    spoofed-data))
 
-(listen-to-spoof-gpio-filesystem "./spoof-sys/")
-*cwd*
 
+
+(log-spoofed-gpio)
+
+fs/*cwd*
