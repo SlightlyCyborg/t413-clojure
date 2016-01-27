@@ -8,10 +8,12 @@
 (defn output-to-log [root dirs files]
   (map
     (fn [file]
-      {
-       :file (str root "/" file)
-       :data (slurp (str root "/" file))
-      })
+      (let [data (slurp (str root "/" file))]
+        (spit (str root "/" file) "")
+        {
+         :file (str root "/" file)
+         :data data
+        }))
     files))
 
 (defn listen-to-spoof-gpio-filesystem [file-system-location]
@@ -25,12 +27,11 @@
 (defn log-spoofed-gpio []
   (let [spoofed-data
         (str
-          (
+          (t/now) ":"
           (pr-str (listen-to-spoof-gpio-filesystem "./spoof-sys/"))
           "\n")]
   (spit logfile spoofed-data :append true)
     spoofed-data))
-
 
 
 (log-spoofed-gpio)
