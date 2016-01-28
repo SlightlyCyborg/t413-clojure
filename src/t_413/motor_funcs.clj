@@ -1,5 +1,6 @@
-(ns water_wheel.motor-funcs
-  (:require [quil.core :as q]
+(ns t-413.motor-funcs
+  (:require [t-413.spoof-gpio :as spoof]
+            [quil.core :as q]
             [quil.middleware :as m]))
 
 (def wheel-angles [0 120 240])

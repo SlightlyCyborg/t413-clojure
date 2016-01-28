@@ -1,4 +1,4 @@
-(ns water_wheel.spoof-gpio
+(ns t-413.spoof-gpio
   (:require
     [me.raynes.fs :as fs]
     [clj-time.core :as t]))
@@ -20,10 +20,6 @@
    (flatten
     (fs/walk output-to-log file-system-location)))
 
-(defn spoofed-data-empty? [data]
-
-  )
-
 (defn log-spoofed-gpio []
   (let [spoofed-data
         (str
@@ -34,6 +30,16 @@
     spoofed-data))
 
 
-(log-spoofed-gpio)
+(defn poll-loop []
+  (while true
+    (log-spoofed-gpio))
+    (Thread/sleep 50))
 
-fs/*cwd*
+(def poll-thread (Thread. poll-loop))
+
+(defn start-spoofing []
+  (.start poll-thread))
+
+(defn stop-spoofing []
+  (.start poll-thread))
+
