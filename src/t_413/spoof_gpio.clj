@@ -6,29 +6,36 @@
 (def logfile "./gpio-log")
 
 (defn output-to-log [root dirs files]
-  (map
+  (filter #(not (nil? %1))
+   (map
     (fn [file]
       (let [data (slurp (str root "/" file))]
         (spit (str root "/" file) "")
+        (if (> (count data) 0)
         {
          :file (str root "/" file)
          :data data
-        }))
-    files))
+        }
+        )))
+    files)))
 
 (defn listen-to-spoof-gpio-filesystem [file-system-location]
    (flatten
     (fs/walk output-to-log file-system-location)))
 
 (defn log-spoofed-gpio []
-  (let [spoofed-data
+  (let [spoofed-data (listen-to-spoof-gpio-filesystem "./spoof-sys/")
+
+        spoofed-data-string
         (str
           (t/now) ":"
-          (pr-str (listen-to-spoof-gpio-filesystem "./spoof-sys/"))
+          (pr-str spoofed-data)
           "\n")]
-  (spit logfile spoofed-data :append true)
-    spoofed-data))
+    (if (> (count spoofed-data) 0)
+      (spit logfile spoofed-data :append true))
+    spoofed-data-string))
 
+(listen-to-spoof-gpio-filesystem "./spoof-sys/")
 
 (defn poll-loop []
   (while true
@@ -40,6 +47,10 @@
 (defn start-spoofing []
   (.start poll-thread))
 
-(defn stop-spoofing []
-  (.start poll-thread))
 
+(defn stop-spoofing []
+  (.stop poll-thread))
+
+(start-spoofing)
+
+(stop-spoofing)
