@@ -1,16 +1,80 @@
 #include <OpenNI.h>
 #include "stdio.h"
+#include "stdint.h"
 #include <vector>
 #include <string>
 #include <unistd.h>
-//#include <opencv/highgui.h>
-//#include <opencv/cv.h>
-#include "Viewer.h"
+#include <opencv2/opencv.hpp>
 
 
 using namespace openni;
+using namespace cv;
 
 //Forward Declare because why not?
+
+static void colorizeDisparity( const Mat& gray, Mat& rgb, double maxDisp=-1.f, float S=1.f, float V=1.f )
+{
+    CV_Assert( !gray.empty() );
+    CV_Assert( gray.type() == CV_16UC1 );
+
+    if( maxDisp <= 0 )
+    {
+        maxDisp = 0;
+        minMaxLoc( gray, 0, &maxDisp );
+    }
+
+    rgb.create( gray.size(), CV_8UC3 );
+    rgb = Scalar::all(0);
+    if( maxDisp < 1 )
+        return;
+
+    for( int y = 0; y < gray.rows; y++ )
+    {
+        for( int x = 0; x < gray.cols; x++ )
+        {
+            unsigned short d = gray.at<unsigned short>(y,x);
+            unsigned int H = ((unsigned short)maxDisp - d) * 240 / (unsigned short)maxDisp;
+
+            unsigned int hi = (H/60) % 6;
+            float f = H/60.f - H/60;
+            float p = V * (1 - S);
+            float q = V * (1 - f * S);
+            float t = V * (1 - (1 - f) * S);
+
+            Point3f res;
+
+            if( hi == 0 ) //R = V,  G = t,  B = p
+                res = Point3f( p, t, V );
+            if( hi == 1 ) // R = q, G = V,  B = p
+                res = Point3f( p, V, q );
+            if( hi == 2 ) // R = p, G = V,  B = t
+                res = Point3f( t, V, p );
+            if( hi == 3 ) // R = p, G = q,  B = V
+                res = Point3f( V, q, p );
+            if( hi == 4 ) // R = t, G = p,  B = V
+                res = Point3f( V, p, t );
+            if( hi == 5 ) // R = V, G = p,  B = q
+                res = Point3f( q, p, V );
+
+            uchar b = (uchar)(std::max(0.f, std::min (res.x, 1.f)) * 255.f);
+            uchar g = (uchar)(std::max(0.f, std::min (res.y, 1.f)) * 255.f);
+            uchar r = (uchar)(std::max(0.f, std::min (res.z, 1.f)) * 255.f);
+
+            rgb.at<Point3_<uchar> >(y,x) = Point3_<uchar>(b, g, r);
+        }
+    }
+}
+
+bool str_to_uint16(const char *str, uint16_t *res) {
+    char *end;
+    errno = 0;
+    long val = strtol(str, &end, 10);
+    if (errno || end == str || *end != '\0' || val < 0 || val >= 0x10000) {
+        return false;
+    }
+    *res = (uint16_t)val;
+    return true;
+}
 
 
 class Structure_Sensor{
@@ -92,7 +156,7 @@ int Structure_Sensor::add_frame_listener(SensorType sensor_type, VideoStream::Ne
 		for(stream_it = streams_by_device_it->begin();
 				stream_it != streams_by_device_it->end();
 				stream_it++){
-			if(sensor_type = (*stream_it)->getSensorInfo().getSensorType()){
+			if(sensor_type == (*stream_it)->getSensorInfo().getSensorType()){
 				(*stream_it)->addNewFrameListener(listener);
 				return 1;
 			}
@@ -211,51 +275,90 @@ void Structure_Sensor::stop_streams(){
 		}
 	}
 }
-
-
-void Structure_Sensor::start_viewer(SensorType sensor_type, int argc, char** argv){
-	int device_index = 0;
-	VideoStream *depth_stream, *ir_stream;
-	for(streams_by_device_it = streams_by_device.begin();
-			streams_by_device_it != streams_by_device.end();
-			streams_by_device_it++){
-		//Get the first stream that has this sensor type and then add the listener
-		for(stream_it = streams_by_device_it->begin();
-				stream_it != streams_by_device_it->end();
-				stream_it++){
-			if(SENSOR_DEPTH == (*stream_it)->getSensorInfo().getSensorType()){
-				depth_stream = (*stream_it);
-				ir_stream = (*stream_it);
-			}
-				//Deleted init status checking. F*** sane error handling!!
-		}
-				device_index++;
-	}
-	SampleViewer sampleViewer("Simple Viewer", *devices[0], *depth_stream, *ir_stream);
-		sampleViewer.init(argc, argv);
-		sampleViewer.run();
-
-}
-
 //DISTGUSTING CODE DUPLICATION. FIX! ^^^^
 
 
 //A new Frame Listener that prints the frame
 class PrintFrameListener : public VideoStream::NewFrameListener{
 		void onNewFrame(VideoStream& stream){
+			printf("in-listener");
 			int i,j,k;
-			int h, w, stride;
+			int h, w, stride, fps, size;
+			PixelFormat p_type;
+			VideoMode v_mode;
+		  uint16_t *data;
+			const SensorInfo* s_info;
+			SensorType s_type;
 			
 			VideoFrameRef* pFrame = new VideoFrameRef();
 			stream.readFrame(pFrame);
+
+			v_mode = pFrame->getVideoMode();
+			
+
+			s_info = &stream.getSensorInfo();
+			s_type = s_info->getSensorType();
+			p_type = v_mode.getPixelFormat();
+			fps    = v_mode.getFps();
 			stride = pFrame->getStrideInBytes();
 			w      = pFrame->getWidth();
 			h      = pFrame->getHeight();
+			data   = (uint16_t*)pFrame->getData();
+			size   = pFrame->getDataSize();
 
 			printf("Frame recieved\n");
-			printf("----Stride: %d\n", stride);
-			printf("----WidthxHeight: %dx%d\n", w, h);
+			printf("----Stride      : %d\n"    , stride);
+			printf("----WidthxHeight: %dx%d\n" , w, h);
+			printf("----PixelFormat : %d\n"   , p_type);
+			printf("----FPS         : %d\n"    , fps);
+			printf("----Size        : %d\n"    ,size);
+			printf("----Sensor Type : %d\n"    ,s_type);
+			printf("----DATA!!----------\n");
+
+			/*for(i=0; i<h; i++){
+				printf("\n");
+				for(j=0; j<w; j++){
+					printf("%d,", data[i*w + w]);
+				}
+				}*/
 		}
+};
+
+//A NewFrameListener that prints the image using OpenCV's highgui
+class CVFrameListener : public VideoStream::NewFrameListener{
+
+	cv::Mat buff_image;
+	cv::Mat new_image;
+	cv::Mat old_image;
+
+public:
+	CVFrameListener(){
+		//Init the HighGUI.
+		cv::namedWindow("sensor");
+	}
+
+	~CVFrameListener(){
+		cv::destroyWindow("sensor");
+	}
+
+	void onNewFrame(VideoStream& stream){
+		Mat validColorDisparityMap;
+		printf("Got frame");
+		VideoFrameRef* pFrame = new VideoFrameRef();
+		stream.readFrame(pFrame);
+
+		//Turn the VideoFrameRef into IplImage
+		int w = pFrame->getWidth();
+		int h = pFrame->getHeight();
+
+		new_image = cv::Mat(h, w, CV_16UC1, (uint16_t*)pFrame->getData());
+		colorizeDisparity(new_image, validColorDisparityMap);
+		if(new_image.empty()){
+			printf("img empty");
+		}else{
+			cv::imshow("sensor", validColorDisparityMap);
+		}
+	}
 };
 
 
@@ -263,13 +366,13 @@ class PrintFrameListener : public VideoStream::NewFrameListener{
 
 int main(int argc, char *argv[]){
 	Structure_Sensor* my_structure = new Structure_Sensor();
-	PrintFrameListener* my_listener = new PrintFrameListener();
-	/*my_structure->add_frame_listener(SENSOR_IR, my_listener);
+	CVFrameListener* my_listener = new CVFrameListener();
+	//PrintFrameListener* my_listener = new PrintFrameListener();
+	my_structure->add_frame_listener(SENSOR_DEPTH, my_listener);
 	my_structure->start_streams();
-	usleep(10000000);
+	while(true){
+	}
 	my_structure->stop_streams();
-	*/
-	my_structure->start_viewer(SENSOR_DEPTH, argc, argv);
 	delete my_structure;
 	delete my_listener;
 }
