@@ -1,0 +1,19 @@
+CC = g++
+
+INTEROP = openni_opencv_interop.cpp
+INTEROP_TEST = openni_opencv_interop_test.cpp
+INTEROP_OBJ =  openni_opencv_interop.o
+
+NI_LIB = -L /usr/local/Cellar/openni2/2.2.0.33/lib/ni2 -lOpenNI2
+NI_INC = -I /usr/local/Cellar/openni2/2.2.0.33/include/ni2
+
+interop:
+	$(CC) $(INTEROP) -c $(NI_INC)
+
+test_interop: interop
+	$(CC) $(INTEROP_TEST) $(INTEROP_OBJ) -o test_interop $(NI_INC) $(NI_LIB)
+
+clean:
+	rm $(INTEROP_OBJ) rm test_interop
+
+
