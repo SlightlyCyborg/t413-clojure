@@ -114,17 +114,15 @@ void CVFrameExtractor::onNewFrame(VideoStream& stream){
 	//Exception Safe
 	{
 		//Mutex scope
-		lock_guard<mutex> lock(mu);
+		std::unique_lock<mutex> lock(mu);
 
 		//Free last frame if get_one_frame was not called
 		if(got_last_frame == false){
 			cur_frame.release();
 		}
-
-		cur_frame = cv::Mat(h, w, CV_16UC1, (uint16_t*)pFrame.getData());
 		new_frame_available.notify_all();
+		cur_frame = cv::Mat(h, w, CV_16UC1, (uint16_t*)pFrame.getData());
 	}
-
 	got_last_frame = false;
 }
 
