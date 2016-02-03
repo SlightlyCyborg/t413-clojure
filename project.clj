@@ -7,4 +7,6 @@
                  [quil "2.2.6"]
                  [me.raynes/fs "1.4.6"]
                  [clj-time "0.11.0"]
-                 [org.clojure/data.json "0.2.6"]])
+                 [org.clojure/data.json "0.2.6"]
+                 [org.clojure/clojurescript "1.7.228"]
+                 ])
