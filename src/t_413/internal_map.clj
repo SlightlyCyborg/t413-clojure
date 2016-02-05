@@ -40,6 +40,10 @@
    :w w}))
    (range number-objs)))
 
+(defn draw-goal [goal]
+  (q/stroke 255 100 100)
+  (q/ellipse (goal :x) (goal :y) 10 10))
+
 
 (defn setup []
   (q/frame-rate 30)
@@ -50,10 +54,12 @@
 
 (defn real-coors-to-pixels [obj]
   (let [factor (/ pxls context_w)]
-    (map
-     (fn [key val]
-        (println val))
-     obj)))
+    (apply merge
+     (map
+     (fn [val]
+       {(first val)
+        (* (second val) factor)})
+     obj))))
        
 (real-coors-to-pixels {:a 1 :b 2})
 
@@ -62,7 +68,8 @@
   (doseq [obj (state :objects)]
      (let [n-obj (real-coors-to-pixels obj)]
        (println n-obj)
-       (q/rect (n-obj :x) (n-obj :y) (n-obj :w) (n-obj :h)))))
+       (q/rect (n-obj :x) (n-obj :y) (n-obj :w) (n-obj :h))
+       (draw-goal {:x 200 :y 200}))))
 
 
 (defn update-state [state]
