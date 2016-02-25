@@ -1,0 +1,2 @@
+(ns cemerick.austin.image-paths
+  (:require [me.raynes/fs :as fs]))

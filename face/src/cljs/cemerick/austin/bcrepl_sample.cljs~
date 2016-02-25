@@ -1,0 +1,17 @@
+(ns cemerick.austin.bcrepl-sample
+  (:require [clojure.browser.repl
+             ]
+            'jayq))
+
+(defn hello
+  []
+  (js/alert "hello"))
+
+(defn whoami
+  []
+  (.-userAgent js/navigator))
+
+(defn switch-face [face]
+  ($ (keyword (str "#" face)))
+  )
+

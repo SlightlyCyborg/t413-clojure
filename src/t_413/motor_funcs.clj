@@ -1,7 +1,9 @@
 (ns t-413.motor-funcs
   (:require [t-413.spoof-gpio :as spoof]
             [quil.core :as q]
-            [quil.middleware :as m]))
+            [quil.middleware :as m]
+            [clodiuno.core :refer :all]
+            [clodiuno.firmata :refer :all]))
 
 (def wheel-angles [0 120 240])
 
@@ -41,10 +43,12 @@
 )
 
 
-(boot-robot)
 
 
-(monitor-spoof-sys (str gpio "/export"))
+(defn test-arduino-conn [tty]
+    (let [board (arduino :firmata tty :baudrate 9600)]
+        (pin-mode board 13 OUTPUT)
+        (println "loop"))
 
 
-
+(test-arduino-conn "/dev/tty.usbserial-DN00Q954")

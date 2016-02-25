@@ -9,4 +9,4 @@
                  [clj-time "0.11.0"]
                  [org.clojure/data.json "0.2.6"]
                  [org.clojure/clojurescript "1.7.228"]
-                 ])
+                 [clodiuno "0.0.4-SNAPSHOT"]])

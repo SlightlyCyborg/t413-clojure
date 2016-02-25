@@ -1,0 +1,22 @@
+(ns cemerick.austin.image-paths
+  (:require [me.raynes.fs :as fs]))
+
+(defn get-gifs []
+    (fs/find-files "resources/public/roboteyes" #".+\.gif"))
+
+(defn get-file-names [files]
+  (map #(.getPath %1) 
+       files))
+
+
+(defn img-tag-from-file-names [file-names]
+  (doseq [file-name file-names]
+    (print (str
+            "<img src='" file-name "'>\n"))))
+       
+
+(img-tag-from-file-names (get-file-names (get-gifs)))
+
+
+
+
