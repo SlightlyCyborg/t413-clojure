@@ -243,18 +243,28 @@
   cljs.test
   (:require-macros [clojure.template :as temp]
                    [cljs.test :as test])
-  (:require [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [cljs.pprint :as pprint]))
 
 ;; =============================================================================
 ;; Default Reporting
 
 (defn empty-env
+  "Generates a testing environment with a reporter.
+   (empty-env) - uses the :cljs.test/default reporter.
+   (empty-env :cljs.test/pprint) - pretty prints all data structures. 
+   (empty-env reporter) - uses a reporter of your choosing.
+
+   To create your own reporter see cljs.test/report"
   ([] (empty-env ::default))
   ([reporter]
-   {:report-counters {:test 0 :pass 0 :fail 0 :error 0}
-    :testing-vars ()
-    :testing-contexts ()
-    :reporter reporter}))
+   (cond-> {:report-counters {:test 0 :pass 0 :fail 0 :error 0}
+            :testing-vars ()
+            :testing-contexts ()
+            :formatter pr-str
+            :reporter reporter}
+     (= ::pprint reporter) (assoc :reporter ::default
+                             :formatter pprint/pprint))))
 
 (def ^:dynamic *current-env* nil)
 
@@ -312,14 +322,18 @@
 (defmethod report [::default :pass] [m]
   (inc-report-counter! :pass))
 
+(defn- print-comparison [m]
+  (let [formatter-fn (or (:formatter (get-current-env)) pr-str)]
+    (println "expected:" (formatter-fn (:expected m)))
+    (println "  actual:" (formatter-fn (:actual m)))))
+
 (defmethod report [::default :fail] [m]
   (inc-report-counter! :fail)
   (println "\nFAIL in" (testing-vars-str m))
   (when (seq (:testing-contexts (get-current-env)))
     (println (testing-contexts-str)))
   (when-let [message (:message m)] (println message))
-  (println "expected:" (pr-str (:expected m)))
-  (println "  actual:" (pr-str (:actual m))))
+  (print-comparison m))
 
 (defmethod report [::default :error] [m]
   (inc-report-counter! :error)
@@ -327,8 +341,7 @@
   (when (seq (:testing-contexts (get-current-env)))
     (println (testing-contexts-str)))
   (when-let [message (:message m)] (println message))
-  (println "expected:" (pr-str (:expected m)))
-  (print "  actual: ") (prn (:actual m)))
+  (print-comparison m))
 
 (defmethod report [::default :summary] [m]
   (println "\nRan" (:test m) "tests containing"
@@ -344,12 +357,17 @@
   #_(println ":begin-test-var" (testing-vars-str m)))
 (defmethod report [::default :end-test-var] [m])
 (defmethod report [::default :end-run-tests] [m])
+(defmethod report [::default :end-test-all-vars] [m])
+(defmethod report [::default :end-test-vars] [m])
+
+;; =============================================================================
+;; File, Line, and Column Helpers
 
 (defn js-line-and-column [stack-element]
   (let [parts (.split stack-element ":")
         cnt   (count parts)]
-    [(js/parseInt (nth parts (- cnt 2)))
-     (js/parseInt (nth parts (dec cnt)))]))
+    [(js/parseInt (nth parts (- cnt 2)) 10)
+     (js/parseInt (nth parts (dec cnt)) 10)]))
 
 (defn js-filename [stack-element]
   (first (.split (last (.split stack-element "/out/")) ":")))
@@ -560,7 +578,9 @@
   appropriate fixtures assuming they are present in the current
   testing environment."
   [vars]
-  (run-block (test-vars-block vars)))
+  (run-block (concat (test-vars-block vars)
+                     [(fn []
+                        (report {:type :end-test-vars :vars vars}))])))
 
 ;; =============================================================================
 ;; Running Tests, high level functions

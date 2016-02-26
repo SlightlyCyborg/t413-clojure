@@ -26,6 +26,8 @@
 
 (emotion-names-to-transition-names [:happy :sad :normal])
 
+(declare gifs)
+
 (defn show-gif [gif-keyword]
   (-> (jayq.core/$ (.get_canvas (gifs gif-keyword)))
       (jayq.core/show)))
@@ -52,15 +54,6 @@
    (hide-gif old-face)
    (show-gif new-face)
    (play-gif new-face))))
-
-
-(defn reset-gif-test []
-  (def cur-face (atom :happy))
-  (def transition-queue (atom #queue []))
-  (show-gif :happy)
-  (hide-gif :normal-to-exuberant)
-  (hide-gif :happy-to-normal)
-  (make-transition-queue :happy :exuberant))
 
 
   
@@ -111,17 +104,34 @@
   gifs))
 
 (def gifs (get-and-load-gifs))
+
+
+;--------Module Test----------
+(defn reset-gif-test []
+  (swap! cur-face (atom :happy))
+  (swap! transition-queue (atom #queue []))
+  (show-gif :happy)
+  (hide-gif :normal-to-exuberant)
+  (hide-gif :happy-to-normal)
+  (make-transition-queue :happy :exuberant))
+
+;Call this to reset test
+;(reset-gif-test)
+
+;Then manually call this and watch face change
+;(make-transition)
+
+;Uncomment and execute to observe
+;@cur-face
+;@transition-queue
+
+
+;Used for controlling an individual gif
+;(play-gif :normal-to-exuberant)
+;------------ END ------------
  
 
 
-(reset-gif-test)
-
-
-;@cur-face
-
-;@transition-queue
-
-(make-transition)
 
 
 
