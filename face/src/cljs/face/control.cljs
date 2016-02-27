@@ -6,14 +6,23 @@
             [cljs.core.async :as async :refer (<! >! put! chan)]
             [taoensso.timbre :as timbre :refer-macros (tracef debugf infof warnf errorf)]
             [taoensso.sente  :as sente :refer (cb-success?)]
+            [taoensso.encore :as encore :refer ()]
             [weasel.repl :as repl]
             )
   (:require-macros [cljs.core.async.macros :as asyncm :refer (go go-loop)]))
 
 
+(defn ->output! [fmt & args]
+  (let [msg (apply encore/format fmt args)]
+    (.log js/console msg)))
+
+
 (defn connect-to-repl []
+  (try
     (when-not (repl/alive?)
-      (repl/connect "ws://localhost:9001")))
+      (repl/connect "ws://localhost:9001"))
+    (catch js/Object e
+       (.log js/console e))))
 
 (connect-to-repl)
 
@@ -49,7 +58,7 @@
   (.play (gifs gif-keyword)))
 
 (def transition-queue (atom #queue [])) 
-(def cur-face (atom :happy))
+(def cur-face (atom :normal))
 
 
 ;Weird FEELS. Imperative Clojure. EWWWWWWWWWW!!!!!
@@ -150,26 +159,85 @@
       (make-transition-queue @cur-face emotion)
       (make-transition))))
 
+(defn init-ws []
+    (let [;; For this example, select a random protocol:
+        rand-chsk-type (if (>= (rand) 0.5) :ajax :auto)
+      _ (->output! "Randomly selected chsk type: %s" rand-chsk-type)
 
-;(change-emotion :exuberant)
+      ;; Serializtion format, must use same val for client + server:
+      packer :edn ; Default packer, a good choice in most cases
+      ;; (sente-transit/get-flexi-packer :edn) ; Experimental, needs Transit dep
 
-(defn init-face []
-  (def gifs (get-and-load-gifs))
-  (show-gif :exuberant))
+      {:keys [chsk ch-recv send-fn state]}
+      (sente/make-channel-socket-client!
+        "/chsk" ; Must match server Ring routing URL
+        {:type   rand-chsk-type
+         :packer packer})]
 
-(set! (.-onload js/window) #(init-face))
-
-(defn init-socket []
-  (let [{:keys [chsk ch-recv send-fn state]}
-      (sente/make-channel-socket! "/chsk" ; Note the same path as before
-       {:type :auto ; e/o #{:auto :ajax :ws}
-       })]
   (def chsk       chsk)
   (def ch-chsk    ch-recv) ; ChannelSocket's receive channel
   (def chsk-send! send-fn) ; ChannelSocket's send API fn
   (def chsk-state state)   ; Watchable, read-only atom
   ))
 
-;Normal breaks
 
+;;;; Sente event handlers
+
+(defmulti -event-msg-handler
+  "Multimethod to handle Sente `event-msg`s"
+  :id ; Dispatch on event-id
+  )
+
+(defn event-msg-handler
+  "Wraps `-event-msg-handler` with logging, error catching, etc."
+  [{:as ev-msg :keys [id ?data event]}]
+  (-event-msg-handler ev-msg))
+
+(defmethod -event-msg-handler
+  :default ; Default/fallback case (no other matching handler)
+  [{:as ev-msg :keys [event]}]
+  (->output! "Unhandled event: %s" event))
+
+(defmethod -event-msg-handler :chsk/state
+  [{:as ev-msg :keys [?data]}]
+  (if (= ?data {:first-open? true})
+    (->output! "Channel socket successfully established!")
+    (->output! "Channel socket state change: %s" ?data)))
+
+(defmethod -event-msg-handler :chsk/recv
+  [{:as ev-msg :keys [?data]}]
+  (let [my-json (second ?data)]
+    (->output!  (str my-json))
+    (->output! "outputing json")
+    (if (= (my-json :type) "emotion")
+        (change-emotion (keyword (my-json :emotion)))))
+  (->output! "Push event from server: %s" ?data)
+  (->output! "Changed2"))
+
+
+(defmethod -event-msg-handler :chsk/handshake
+  [{:as ev-msg :keys [?data]}]
+  (let [[?uid ?csrf-token ?handshake-data] ?data]
+    (->output! "Handshake: %s" ?data)))
+
+(defonce router_ (atom nil))
+(defn  stop-router! [] (when-let [stop-f @router_] (stop-f)))
+(defn start-router! []
+  (stop-router!)
+  (reset! router_
+    (sente/start-client-chsk-router!
+      ch-chsk event-msg-handler)))
+
+;init stuff
+
+(defn start-ws! []
+  (start-router!))
+
+(defn init-face []
+  (def gifs (get-and-load-gifs))
+  (show-gif :normal)
+  (init-ws)
+  (start-ws!))
+
+(set! (.-onload js/window) #(init-face))
 

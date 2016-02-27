@@ -10,8 +10,7 @@
                  [me.raynes/fs "1.4.6"]
                  [jayq "2.5.4"]
                  [alembic "0.3.2"]
-                 [http-kit "2.1.21-alpha2"]
-                 ]
+                 [http-kit "2.1.21-alpha2"]]
 
 
   :profiles {:dev {:repl-options {:init-ns face.core
@@ -31,5 +30,6 @@
                                   [weasel "0.7.0" :exclusions [org.clojure/clojurescript]]
                                   [com.taoensso/sente "1.8.0-beta1"]
                                   [com.taoensso/timbre       "4.2.1"]
+                                  [com.taoensso/encore "2.36.2"]
                                   ]}})
 
