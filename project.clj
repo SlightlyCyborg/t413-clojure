@@ -9,4 +9,8 @@
                  [clj-time "0.11.0"]
                  [org.clojure/data.json "0.2.6"]
                  [org.clojure/clojurescript "1.7.228"]
-                 [clodiuno "0.0.4-SNAPSHOT"]])
+                 [clj-serial "2.0.4-SNAPSHOT"]
+                 [commons-net/commons-net "3.3"]
+                 [overtone/at-at "1.2.0"]]
+
+  :profiles {:dev {:dependencies [[alembic "0.3.2"]]}})
