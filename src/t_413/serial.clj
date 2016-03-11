@@ -95,7 +95,6 @@
     (dosync (ref-set stop-sockets true)))
 
 
-
 ;;;TEST funcs
 (defn- start-test []
   (let [dispatch-map {"00" #(println %1)}]
