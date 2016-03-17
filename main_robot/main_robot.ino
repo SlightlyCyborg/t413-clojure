@@ -6,31 +6,47 @@
 #define WHEEL_0_DEG "30"
 #define WHEEL_120_DEG "31"
 #define WHEEL_240_DEG "32"
+#define CLOJURE_CONNECTED false
 
 #include <stdio.h>
 #include <Wire.h>
 #include "mpu.h"
+#include "head_assembly.h" 
+#include "drive_motors.h"
+#include "shift_out.h"
+
+Head_Assembly* head_mover;
+Drive_Result* drive_results;
+Bit_Shifter shifter;
+Drive_Motors* drive_motors;
+MPU* mpu;
+MPU_Data* mpu_data;
 
 //Resistor in ohms used to measure the current voltage of the battery
 //Needed for undervoltage dropout so that the batteries do not become under charged
 float r1=6800.0;
 float r2=2000.0;
 
-//Motor pins
-int forward_pins[] = {3};
-int backward_pins[] = {5};
-
-//Clojure vars
-bool clojure_connected = false;
-
 //For the loop
 long previous_millis = 0;
+
+//MPU Data
+uint16_t acc_data[3] = {0, 0, 0};
 
 
 void setup() {
   // put your setup code here, to run once:
 	Serial.begin(115200); 
-	mpu_setup();
+	//mpu_setup();
+	head_mover = new Head_Assembly();
+  shifter = Bit_Shifter();	
+	drive_motors = new Drive_Motors();
+	mpu = new MPU();
+
+	//int freqs[3] = {0,0,0};
+	//head_mover->drive_motors(freqs);
+	//delay(5000);
+
 }
 
 
@@ -55,55 +71,35 @@ float get_cur_main_battery_voltage(){
 		return rv;
 }
 
-void change_motor_speed(int motor, float speed){
-	//Speed should be a val from -1 to 1 which represents the speed of the motor
-	// Positive numbers are forward and negative numbers are backward
-	if(speed > 1 || speed < -1){
-		throw_exception("Speeds must be [-1,1]");
-	}else if(motor < 0 || motor > 2){
-		throw_exception("There are only 3 motors");
-		//Technically there are 6, but he doesn't need to know that. hehe 
-	}else{
-		if(speed == 0){
-			//Set both forward and backwards to 0 
-			analogWrite(forward_pins[motor], 0); 
-			analogWrite(backward_pins[motor], 0); 
-		}else{
-				//Denormalize the speed
-				int digital_speed = (int)(speed * 255);
-
-				if(speed > 0){
-					analogWrite(backward_pins[motor], 0);
-					analogWrite(forward_pins[motor], digital_speed);
-				}else{
-					analogWrite(forward_pins[motor], 0);
-					analogWrite(backward_pins[motor], -1 * digital_speed);
-				}
-		}
-	}
-}
-
-void throw_exception(String msg){
-	//This function handles exceptions.
-
-	if(clojure_connected){
-	//If serial_clojure is connected, then send the proper serial code for an exception
-
-		//Implement this
-	}else{ 
-	//Else print to the serial in the normal way the exception
-		//Serial.print("Exception: ");
-		//Serial.println(msg);
-	}
-}
-
 void test_motors(){
-	change_motor_speed(0, .5);
-	delay(3000);
-	change_motor_speed(0, 0);
-	delay(3000);
-	change_motor_speed(0, -.5);
-	delay(3000);
+	drive_motors->change_motor_speed(0, .5);
+	delay(1000);
+	drive_motors->change_motor_speed(0, 0);
+	delay(1000);
+	drive_motors->change_motor_speed(0, -.5);
+	delay(1000);
+	drive_motors->change_motor_speed(0, 0);
+	delay(1000);
+
+  drive_motors->change_motor_speed(1, .5);
+	delay(1000);
+	drive_motors->change_motor_speed(1, 0);
+	delay(1000);
+	drive_motors->change_motor_speed(1, -.5);
+	delay(1000);
+	drive_motors->change_motor_speed(1, 0);
+	delay(1000);
+
+	
+  drive_motors->change_motor_speed(2, .5);
+	delay(1000);
+	drive_motors->change_motor_speed(2, 0);
+	delay(1000);
+	drive_motors->change_motor_speed(2, -.5);
+	delay(1000);
+	drive_motors->change_motor_speed(2, 0);
+	delay(1000);
+	
 }
 
 void sendData (String data_id, String data){
@@ -130,11 +126,41 @@ void loop() {
 
 	//Send Data if need be
 	send_neccisary_data(currentMillis);
+
+	
+	//int freqs[3] = {1, 1, 1};
+	/*
+	head_mover->drive_motors(freqs);
+	delay(2);
+	*/
+
+	/*
+	freqs[0] = 0;
+	freqs[1] = 0;
+	freqs[2] = 0;
+	head_mover->drive_motors(freqs);
+	delay(10);
+	*/
+	
+
+	//shifter.shift_out("1");
+	//Serial.println(analogRead(A1));
 	
 	//delay(2000);
 	//test_motors();
 
-	//mpu_loop();
+
+	mpu_data = mpu->loop();
+	for(int i = 0; i < 3; i++){
+		Serial.print("Accelerometer: ");
+		Serial.print(mpu_data->a[0]);
+		Serial.print(", ");
+		Serial.print(mpu_data->a[1]);
+		Serial.print(", ");
+		Serial.println(mpu_data->a[2]);
+	}
+	delay(1000);
+	delete mpu_data;
 }
 
 

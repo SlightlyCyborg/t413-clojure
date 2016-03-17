@@ -1,19 +1,15 @@
-#include "head_assembly.h"
+#include "shift_out.h"
 
 
+Bit_Shifter *my_shifter;
 
 void print_bits(){
-	Serial.print(analogRead(A5));
-  Serial.print(", ");
-	Serial.print(analogRead(A4));
-  Serial.print(", ");
-	Serial.print(analogRead(A3));
-  Serial.print(", ");
-	Serial.println(analogRead(A2));
+	Serial.println(analogRead(A1));
 }
 
 void setup(){
-	setup_head_motor();
+  my_shifter = new Bit_Shifter();
+	my_shifter->init();
 	Serial.begin(9600);
 }
 
@@ -23,7 +19,7 @@ void setup(){
 
 
 
-Drive_Result dr = Drive_Result{"", 0, 0};
+//Drive_Result dr = Drive_Result{"", 0, 0};
 
 void loop(){
 
@@ -41,7 +37,16 @@ void loop(){
 	*/
 
 	
-	shift_out(String("0000001000000000"));
+	my_shifter->shift_out(String("1"));
+	delay(1);
+	print_bits();
+	delay(1000);
+	
+	my_shifter->shift_out(String("0"));
+	delay(1);
+	print_bits();
+	delay(1000);
+
 	/*
 	delayMicroseconds(3000);
 	//print_bits();
