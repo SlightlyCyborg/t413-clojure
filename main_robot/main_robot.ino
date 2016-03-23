@@ -17,10 +17,12 @@
 
 Head_Assembly* head_mover;
 Drive_Result* drive_results;
-Bit_Shifter shifter;
+//Bit_Shifter shifter;
 Drive_Motors* drive_motors;
 MPU* mpu;
 MPU_Data* mpu_data;
+String inputString = "";         // a string to hold incoming data
+bool stringComplete = false;
 
 //Resistor in ohms used to measure the current voltage of the battery
 //Needed for undervoltage dropout so that the batteries do not become under charged
@@ -36,12 +38,14 @@ uint16_t acc_data[3] = {0, 0, 0};
 
 void setup() {
   // put your setup code here, to run once:
-	Serial.begin(115200); 
+	Serial.begin(9600); 
+	Serial.setTimeout(100);
 	//mpu_setup();
 	head_mover = new Head_Assembly();
-  shifter = Bit_Shifter();	
+  //shifter = Bit_Shifter();	
 	drive_motors = new Drive_Motors();
-	mpu = new MPU();
+	//inputString.reserve(200);
+	//mpu = new MPU();
 
 	//int freqs[3] = {0,0,0};
 	//head_mover->drive_motors(freqs);
@@ -119,15 +123,53 @@ void send_neccisary_data(unsigned long currentMillis){
 	}
 }
 
+void serialEvent() {
+	//Example data: C05P0456
+		//Handle the data
+	  Serial.println("printing event");
+		
+		
+		String data = Serial.readString(); 
+
+		String command = data.substring(1,3);
+		String payload = data.substring(4,8);
+
+		if(command == "01"){
+			int direction = payload.substring(0,3).toInt();
+			float speed = (payload.substring(3).toInt())/10.0;
+			Serial.print("direction: ");
+			Serial.println(direction);
+			Serial.print("speed: ");
+			Serial.println(speed);
+			drive_motors->change_motor_direction(direction, speed);
+		}
+		if(command == "02"){
+			head_mover->test_step();
+		}
+
+		Serial.print("command: ");
+		Serial.println(command);
+
+		Serial.print("payload: ");
+		Serial.println(payload);
+
+}
+
 
 void loop() {
   // put your main code here, to run repeatedly:
 	unsigned long currentMillis = millis(); // missil Dislexia?
 
+	//Serial.println("abc");
 	//Send Data if need be
-	send_neccisary_data(currentMillis);
+	//send_neccisary_data(currentMillis);
 
 	
+	/*for(int i = 0; i<360; i++){
+		drive_motors->change_motor_direction(i, .2);
+		delay(20);
+	}
+	*/
 	//int freqs[3] = {1, 1, 1};
 	/*
 	head_mover->drive_motors(freqs);
@@ -148,18 +190,20 @@ void loop() {
 	
 	//delay(2000);
 	//test_motors();
-
-
-	mpu_data = mpu->loop();
-	for(int i = 0; i < 3; i++){
-		Serial.print("Accelerometer: ");
-		Serial.print(mpu_data->a[0]);
-		Serial.print(", ");
-		Serial.print(mpu_data->a[1]);
-		Serial.print(", ");
-		Serial.println(mpu_data->a[2]);
+	if(Serial.available()){
+		//on_serial();
 	}
-	delay(1000);
+	//Serial.println("Printing");
+
+	//mpu_data = mpu->loop();
+	for(int i = 0; i < 3; i++){
+		//Serial.print("Accelerometer: ");
+		//Serial.print(mpu_data->a[0]);
+		//Serial.print(", ");
+		//Serial.print(mpu_data->a[1]);
+		//Serial.print(", ");
+		//Serial.println(mpu_data->a[2]);
+	}
 	delete mpu_data;
 }
 
@@ -170,6 +214,3 @@ void loop() {
  time loop() runs, so using delay inside loop can delay
  response.  Multiple bytes of data may be available.
  */
-void serialEvent() {
-		//Handle the data
-}

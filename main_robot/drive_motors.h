@@ -35,6 +35,19 @@ class Drive_Motors{
 				}
 			}
 		}
+
+		void change_motor_direction(int direction, float speed){
+			//Iterate through motors and get the "speed"
+			float speeds[3];
+
+			speeds[0] = speed * cos(radians(direction - 0));
+			speeds[1] = speed * cos(radians(direction - 120));
+			speeds[2] = speed * cos(radians(direction - 240));
+
+			for(int i = 0; i < 3; i++){
+				change_motor_speed(i, speeds[i]);
+			}
+		}
 };
 
 #endif

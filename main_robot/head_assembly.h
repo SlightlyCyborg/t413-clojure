@@ -15,7 +15,7 @@
 struct Head_Assembly {
 	static const int num_motors = 3;
 	Stepper_Motor *steppers[num_motors];
-	Bit_Shifter bit_shifter;
+	Bit_Shifter* bit_shifter;
 	Drive_Result drive_results[3];
 
 	float frequencies[3];
@@ -26,11 +26,11 @@ struct Head_Assembly {
 
 	Head_Assembly(){
 		int i;
-		bit_shifter = Bit_Shifter();
+		bit_shifter = new Bit_Shifter(12);
 
 		//Initalize steppers
 		for( i=0; i<num_motors; i++ ){
-			steppers[i] = new Stepper_Motor();
+			steppers[i] = new Stepper_Motor(bit_shifter, i * 4);
 		}
 
 		//Initalize drive_results
@@ -55,8 +55,13 @@ struct Head_Assembly {
 			}
 
 			Serial.println(data);
-			bit_shifter.shift_out(data);
+			bit_shifter->shift_out(data);
   }
+
+	void test_step(){
+		steppers[0]->step(1);
+		bit_shifter->shift_out();
+	}
 
 	void drive_motor( float phi, float theta, int millisecs ){
 		float string_lengths[3];
@@ -77,6 +82,24 @@ struct Head_Assembly {
 		*/
 	}
 
+
+	//Take a position on the sphere.
+	//Transform it into a position in polar
+	
+	/*
+	Polar_Coor spherical_to_polar(float phi, float theta){
+		float radius = sin(radians(phi)) * STRING_HYPOT;
+
+		return Polar_Coor(radius, theta);
+	}
+
+	Cart_Coor polar_to_cart(Polar_Coor coor){
+		float x = coor.r * cos(radians(coor.theta));
+		float y = coor.r * sin(radians(coor.theta));
+
+		return Cart_Coor(x, y);
+	}
+	*/
 	
   void calculate_string_lengths(float phi, float theta, float *string_lengths){
 				int i;

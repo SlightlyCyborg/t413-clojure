@@ -1,6 +1,7 @@
 #ifndef _STEPPER_MOTOR_H_
 #define _STEPPER_MOTOR_H_
 
+#include "shift_out.h"
 
 struct Stepper_Motor{
 	
@@ -10,6 +11,16 @@ struct Stepper_Motor{
 														String("0001"),
 													String("0100"),
 														String("0010")};
+
+	  int shift_out_start_bit;
+	  int last_step;
+
+	  Bit_Shifter *bit_shifter;
+
+	  Stepper_Motor(Bit_Shifter *shifter, int shift_out_start_bit){
+			bit_shifter = shifter;
+			last_step = 0;
+	  }
 
 		Drive_Result drive_motor(int frequency, Drive_Result last_drive_result = Drive_Result{"", 0, 0}){
 
@@ -63,6 +74,24 @@ struct Stepper_Motor{
 			//Serial.print(",");
 			return Drive_Result{motor_data, useconds_last_step, next_step};
 		}
+  int step(int direction){
+
+		int cur_step, i;
+
+		if(direction == -1){
+			cur_step = (last_step - 1) % 4;
+		}
+		else{
+			cur_step = (last_step + 1) % 4;
+		}
+
+		for (i=0; i<4; i++){
+			motor_steps[cur_step][i];
+		  bit_shifter->set_bit(shift_out_start_bit + i,  motor_steps[cur_step][i]);
+			
+		}
+		last_step = cur_step;
+	}
 };
 
 

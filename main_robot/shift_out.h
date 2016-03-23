@@ -8,9 +8,13 @@ struct Bit_Shifter{
 		int storage_clock_pin = 8;
 		int master_reset_pin = 12;
 		int pulse_width = 10;
+	  String data;
+	  int data_size;
 
 
-		Bit_Shifter(){
+		Bit_Shifter(int size){
+			int i;
+
 			pinMode(motor_data_pin, OUTPUT);
 			pinMode(shift_clock_pin, OUTPUT);
 			pinMode(storage_clock_pin, OUTPUT);
@@ -21,6 +25,10 @@ struct Bit_Shifter{
 			digitalWrite(storage_clock_pin, LOW);
 			digitalWrite(motor_data_pin, LOW);
 
+			data = "";
+			for(i; i<size; i++){
+				data += "0";
+			}
 		}
 	
 		void reset_shift(){
@@ -57,6 +65,34 @@ struct Bit_Shifter{
 			pulse_clock(storage_clock_pin);
 			delayMicroseconds(1);
 		}
+
+	void shift_out(){
+		int i;
+		reset_shift();
+		for( i=data.length()-1; i>=0; i--){
+			set_data_pin(String(data[i]));
+			pulse_clock(shift_clock_pin);
+		}
+		pulse_clock(storage_clock_pin);
+		delayMicroseconds(1);
+	}
+
+	  bool set_bit(int index, char value){
+			if(value == '0' || value == '1'){
+			  data[index] = value;
+				return true;
+  		}
+			else{
+				return false;
+			}
+		}
+
+	void reset_data(){
+		int i;
+		for(i=0; i<data_size; i++){
+			data[i] = '0';
+		}
+	}
 };
 
 #endif
