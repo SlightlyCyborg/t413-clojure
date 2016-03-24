@@ -162,7 +162,7 @@ void loop() {
 
 	//Serial.println("abc");
 	//Send Data if need be
-	//send_neccisary_data(currentMillis);
+	send_neccisary_data(currentMillis);
 
 	
 	/*for(int i = 0; i<360; i++){
@@ -170,11 +170,13 @@ void loop() {
 		delay(20);
 	}
 	*/
-	//int freqs[3] = {1, 1, 1};
 	/*
+	int freqs[3] = {1, 1, 1};
+	
 	head_mover->drive_motors(freqs);
-	delay(2);
+	delay(20);
 	*/
+
 
 	/*
 	freqs[0] = 0;

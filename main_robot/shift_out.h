@@ -24,6 +24,7 @@ struct Bit_Shifter{
 			digitalWrite(shift_clock_pin, LOW);
 			digitalWrite(storage_clock_pin, LOW);
 			digitalWrite(motor_data_pin, LOW);
+			reset_shift();
 
 			data = "";
 			for(i; i<size; i++){

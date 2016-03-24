@@ -35,8 +35,8 @@ struct Head_Assembly {
 
 		//Initalize drive_results
 		for( i=0; i<num_motors; i++ ){
-					drive_results[i] = {"", 0, 0};
-				}
+				drive_results[i] = {"", 0, 0};
+		}
 	}
 
 	void motor_loop(){
