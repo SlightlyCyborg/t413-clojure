@@ -1,4 +1,4 @@
-(ns t-413.serial
+(ns face.serial
   (:require [overtone.at-at :as at-at]
             [serial.core :as s]
             [clojure.string :as string]))
@@ -105,6 +105,9 @@
   (Thread/sleep 1000) ;Wait for all of the listeners to clean up
   (dosync (ref-set stop-sockets false)) ;Reset the flag for next test
   )
+
+(start-test)
+
 
 
 
