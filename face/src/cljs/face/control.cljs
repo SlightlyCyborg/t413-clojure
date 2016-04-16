@@ -80,7 +80,8 @@
   ;If the from-face is not "normal" then transitiion it to "normal"
   (if (not= from-face :normal)
     (swap! transition-queue conj (keyword (str (name from-face) "-to-normal"))))
-  (swap! transition-queue conj (keyword (str "normal-to-" (name to-face))))
+  (if (not= to-face :normal)
+    (swap! transition-queue conj (keyword (str "normal-to-" (name to-face)))))
   (swap! transition-queue conj to-face))
  
 

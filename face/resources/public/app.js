@@ -49468,7 +49468,7 @@ face.control.make_transition = function() {
 };
 face.control.make_transition_queue = function(a, b) {
   cljs.core.not_EQ_.call(null, a, new cljs.core.Keyword(null, "normal", "normal", -1519123858)) && cljs.core.swap_BANG_.call(null, face.control.transition_queue, cljs.core.conj, cljs.core.keyword.call(null, [cljs.core.str(cljs.core.name.call(null, a)), cljs.core.str("-to-normal")].join("")));
-  cljs.core.swap_BANG_.call(null, face.control.transition_queue, cljs.core.conj, cljs.core.keyword.call(null, [cljs.core.str("normal-to-"), cljs.core.str(cljs.core.name.call(null, b))].join("")));
+  cljs.core.not_EQ_.call(null, b, new cljs.core.Keyword(null, "normal", "normal", -1519123858)) && cljs.core.swap_BANG_.call(null, face.control.transition_queue, cljs.core.conj, cljs.core.keyword.call(null, [cljs.core.str("normal-to-"), cljs.core.str(cljs.core.name.call(null, b))].join("")));
   return cljs.core.swap_BANG_.call(null, face.control.transition_queue, cljs.core.conj, b);
 };
 face.control.make_super_gif_factory = function(a, b) {
