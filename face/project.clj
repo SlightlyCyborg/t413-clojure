@@ -10,7 +10,12 @@
                  [me.raynes/fs "1.4.6"]
                  [jayq "2.5.4"]
                  [alembic "0.3.2"]
-                 [http-kit "2.1.21-alpha2"]]
+                 [clj-time "0.11.0"]
+                 [org.clojure/data.json "0.2.6"]
+                 [org.clojure/clojurescript "1.7.228"]
+                 [clj-serial "2.0.4-SNAPSHOT"]
+                 [commons-net/commons-net "3.3"]
+                 [overtone/at-at "1.2.0"]]
 
 
   :profiles {:dev {:repl-options {:init-ns face.core

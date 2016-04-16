@@ -66,11 +66,9 @@
   (def stop-server nil))
 
 
-(defn start-cljs-repl []
-  (cemerick.piggieback/cljs-repl
-        (weasel.repl.websocket/repl-env :ip "0.0.0.0" :port 9001)))
+;(defn start-cljs-repl []
+;  (cemerick.piggieback/cljs-repl
+;        (weasel.repl.websocket/repl-env :ip "0.0.0.0" :port 9001)))
 
 
 
-
-(run)
