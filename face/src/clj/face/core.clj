@@ -12,6 +12,8 @@
         ring.middleware.params
         ring.middleware.session
         [ring.util.response :refer (file-response)]))
+(use '[clojure.java.shell :only [sh]])
+
 
 (let [{:keys [ch-recv send-fn ajax-post-fn ajax-get-or-ws-handshake-fn
               connected-uids]}
@@ -76,10 +78,18 @@
 
 (change-face :confused)
 
-(change-face :exuberant)
+
+(defn speak [something]
+  (let [command
+        "/home/t-413/cerevoice/examples/basictts/basictts"
+
+        voice
+        "/home/t-413/cerevoice/cerevoice_heather_3.2.0_48k.voice"
+        license
+        "/home/t-413/cerevoice/license.lic"]
+  (sh command voice license :in something)))
 
 
-(change-face :happy)
 
-(run)
+
 
